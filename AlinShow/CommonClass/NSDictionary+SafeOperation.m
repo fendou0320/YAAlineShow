@@ -1,0 +1,142 @@
+//
+//  NSDictionary+SafeOperation.m
+//  AlinShow
+//
+//  Created by 蓝姬英 on 16/9/14.
+//  Copyright © 2016年 Anna Yang. All rights reserved.
+//
+
+#import "NSDictionary+SafeOperation.h"
+
+
+
+@interface NSDictionary (SafeExpectations_Private)
+- (NSString *)stringWithObject:(id)obj;
+- (NSNumber *)numberWithObject:(id)obj;
+- (NSArray *)arrayWithObject:(id)obj;
+- (NSDictionary *)dictionaryWithObject:(id)obj;
+@end
+
+@implementation NSDictionary (SafeOperation)
+
+- (NSString *)stringForKey:(id)key {
+    id obj = [self safeObjectForKey:key];
+    return [self stringWithObject:obj];
+}
+
+- (NSInteger)integerForKey:(id)key {
+    return [[self stringForKey:key] integerValue];
+}
+
+- (NSNumber *)numberForKey:(id)key {
+    id obj = [self safeObjectForKey:key];
+    return [self numberWithObject:obj];
+}
+
+- (NSArray *)arrayForKey:(id)key {
+    id obj = [self safeObjectForKey:key];
+    return [self arrayWithObject:obj];
+}
+
+- (NSDictionary *)dictionaryForKey:(id)key {
+    id obj = [self safeObjectForKey:key];
+    return [self dictionaryWithObject:obj];
+}
+
+- (id)safeObjectForKey:(id)key {
+    NSAssert(key != nil, @"nil key");
+    return [self objectForKey:key];
+}
+
+- (id)objectForKeyPath:(NSString *)keyPath {
+    id object = self;
+    NSArray *keyPaths = [keyPath componentsSeparatedByString:@"."];
+    for (NSString *currentKeyPath in keyPaths) {
+        if (![object isKindOfClass:[NSDictionary class]])
+            object = nil;
+        
+        object = [object objectForKey:currentKeyPath];
+        
+        if (object == nil)
+            break;
+    }
+    return object;
+}
+
+- (NSString *)stringForKeyPath:(id)keyPath {
+    id obj = [self objectForKeyPath:keyPath];
+    return [self stringWithObject:obj];
+    
+}
+
+- (NSInteger)integerForKeyPath:(id)keyPath {
+    return [[self stringForKeyPath:keyPath] integerValue];
+}
+
+- (NSNumber *)numberForKeyPath:(id)keyPath {
+    id obj = [self objectForKeyPath:keyPath];
+    return [self numberWithObject:obj];
+}
+
+- (NSArray *)arrayForKeyPath:(id)keyPath {
+    id obj = [self objectForKeyPath:keyPath];
+    return [self arrayWithObject:obj];
+}
+
+- (NSDictionary *)dictionaryForKeyPath:(id)keyPath {
+    id obj = [self objectForKeyPath:keyPath];
+    return [self dictionaryWithObject:obj];
+}
+
+@end
+
+@implementation NSDictionary (SafeExpectations_Private)
+
+- (NSString *)stringWithObject:(id)obj {
+    NSString *string = obj;
+    
+    if (![string isKindOfClass:[NSString class]] && [string respondsToSelector:@selector(stringValue)])
+        string = [string performSelector:@selector(stringValue)];
+    
+    if (![string isKindOfClass:[NSString class]] && ![string isKindOfClass:[NSNull class]])
+        string = @"";
+    if ([string isKindOfClass:[NSNull class]]) {
+        string = @"";
+    }
+    return string;
+}
+
+- (NSNumber *)numberWithObject:(id)obj {
+    NSNumber *number = obj;
+    
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    if ([number isKindOfClass:[NSString class]])
+        number = [formatter numberFromString:(NSString *)number];
+    
+    if (![number isKindOfClass:[NSNumber class]])
+        number = nil;
+    
+    return number;
+}
+
+- (NSArray *)arrayWithObject:(id)obj {
+    NSArray *array = obj;
+    
+    if (![array isKindOfClass:[NSArray class]]) {
+        array = nil;
+    }
+    
+    return array;
+}
+
+- (NSDictionary *)dictionaryWithObject:(id)obj {
+    NSDictionary *dictionary = obj;
+    
+    if (![dictionary isKindOfClass:[NSDictionary class]]) {
+        dictionary = nil;
+    }
+    
+    return dictionary;
+}
+
+@end
